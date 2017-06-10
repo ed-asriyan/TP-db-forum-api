@@ -7,13 +7,13 @@ import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.stereotype.Service
 import java.sql.ResultSet
 
 /**
  * Created by ed on 10.06.17.
  */
-@RestController
+@Service
 class ForumDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     private val read = { rs: ResultSet, _: Int ->
         Forum(rs.getInt("posts"), rs.getString("slug"),
