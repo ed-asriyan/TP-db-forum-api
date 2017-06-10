@@ -1,4 +1,4 @@
-package models
+package api.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -8,4 +8,4 @@ import com.fasterxml.jackson.annotation.JsonProperty
 class User(@param:JsonProperty("about") var about: String,
            @param:JsonProperty("email") var email: String,
            @param:JsonProperty("fullname") var fullname: String,
-           @param:JsonProperty("nickname") var nickname: String)
+           @param:JsonProperty("nickname") var nickname: String?)
