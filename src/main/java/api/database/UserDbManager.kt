@@ -32,8 +32,8 @@ class UserDbManager(@param:Autowired var jdbcTemplate: JdbcTemplate) {
         }
     }
 
-    fun getOne(nickname: String, email: String?): Result {
-        val sql = "SELECT * FROM users WHERE nickname = '$nickname' OR email = '$email'"
+    fun getOne(nickname: String): Result {
+        val sql = "SELECT * FROM users WHERE nickname = '$nickname'"
         try {
             return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)
         } catch (e: DataAccessException) {
@@ -45,6 +45,21 @@ class UserDbManager(@param:Autowired var jdbcTemplate: JdbcTemplate) {
         val sql = "SELECT * FROM users WHERE nickname = '$nickname' OR email = '$email'"
         try {
             return Result(jdbcTemplate.query(sql, read), HttpStatus.OK)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.NOT_FOUND)
+        }
+    }
+
+    fun update(about: String?, email: String?, fullname: String?, nickname: String): Result {
+        var sql = "UPDATE users SET"
+        sql += if (about != null) " about = '$about'," else " about = about,"
+        sql += if (email != null) " email = '$email'," else " email = email,"
+        sql += if (fullname != null) " fullname = '$fullname'" else " fullname = fullname"
+        sql += " WHERE nickname = '$nickname' RETURNING *"
+        try {
+            return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)
+        } catch (e: DuplicateKeyException) {
+            return Result(null, HttpStatus.CONFLICT)
         } catch (e: DataAccessException) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
