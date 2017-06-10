@@ -14,7 +14,7 @@ import java.sql.ResultSet
  * Created by ed on 10.06.17.
  */
 @Service
-class UserDbManager(@param:Autowired var jdbcTemplate: JdbcTemplate) {
+class UserDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     private val read = { rs: ResultSet, _: Int ->
         User(rs.getString("about"), rs.getString("email"),
                 rs.getString("fullname"), rs.getString("nickname"))
