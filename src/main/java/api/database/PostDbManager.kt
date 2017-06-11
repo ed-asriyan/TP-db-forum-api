@@ -120,6 +120,11 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
         } catch (e: DataAccessException) {
             return HttpStatus.NOT_FOUND
         }
+        if (!posts.isEmpty()) {
+            val count = posts.size
+            val forum = posts[0].forum
+            jdbcTemplate.update("UPDATE forums SET posts = posts + $count WHERE slug = '$forum'")
+        }
         return HttpStatus.CREATED
     }
 

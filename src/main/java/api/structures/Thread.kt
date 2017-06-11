@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Created by ed on 10.06.17.
  */
-data class Thread(@param:JsonProperty("author") var author: String,
+data class Thread(@param:JsonProperty("author") var author: String?,
                   @param:JsonProperty("created") var created: String?,
                   @param:JsonProperty("forum") var forum: String?,
                   @param:JsonProperty("id") var id: Int?,

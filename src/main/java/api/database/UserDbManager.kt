@@ -51,8 +51,7 @@ class UserDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     }
 
     fun update(about: String?, email: String?, fullname: String?, nickname: String): Result {
-        var sql = "UPDATE users SET"
-        sql += if (about != null) " about = '$about'," else " about = about,"
+        var sql = "UPDATE users SET" + if (about != null) " about = '$about'," else " about = about,"
         sql += if (email != null) " email = '$email'," else " email = email,"
         sql += if (fullname != null) " fullname = '$fullname'" else " fullname = fullname"
         sql += " WHERE nickname = '$nickname' RETURNING *"

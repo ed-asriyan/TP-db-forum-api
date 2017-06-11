@@ -27,8 +27,7 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     }
 
     fun create(author: String, created: String?, forum: String, message: String, slug: String?, title: String): Result {
-        var sql = "INSERT INTO threads (author,"
-        sql += if (created != null) " created," else ""
+        var sql = "INSERT INTO threads (author," + if (created != null) " created," else ""
         sql += "  forum, message,"
         sql += if (slug != null) " slug," else ""
         sql += " title)"
@@ -38,6 +37,7 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
         sql += if (slug != null) " '$slug'," else ""
         sql += " '$title') RETURNING *"
         try {
+            jdbcTemplate.update("UPDATE forums SET threads = threads + 1 WHERE slug = '$forum'")
             return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.CREATED)
         } catch (e: DuplicateKeyException) {
             return Result(get(slug!!).body, HttpStatus.CONFLICT)
@@ -91,5 +91,23 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.CONFLICT)
         }
         return Result(get(slugOrId).body, HttpStatus.OK)
+    }
+
+    fun update(message: String, title: String, slugOrId: String): Result {
+        var sql = "UPDATE threads SET message = '$message', title = '$title' WHERE"
+        if (slugOrId.matches("\\d+".toRegex())) {
+            val id = slugOrId.toInt()
+            sql += " id = $id"
+        } else {
+            sql += " slug = '$slugOrId'"
+        }
+        sql += " RETURNING *"
+        try {
+            return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)
+        } catch (e: DuplicateKeyException) {
+            return Result(get(slugOrId).body, HttpStatus.CONFLICT)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.NOT_FOUND)
+        }
     }
 }

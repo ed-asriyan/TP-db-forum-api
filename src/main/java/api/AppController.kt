@@ -57,7 +57,7 @@ class AppController(@param:Autowired val userDb: UserDbManager,
     @RequestMapping(value = "api/forum/{slug}/create", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun createThread(@PathVariable("slug") slug: String, @RequestBody content: Thread): ResponseEntity<Any> {
-        val result = threadDb.create(content.author, content.created, slug, content.message, content.slug, content.title)
+        val result = threadDb.create(content.author!!, content.created, slug, content.message, content.slug, content.title)
         return ResponseEntity.status(result.status).body(result.body)
     }
 
@@ -135,5 +135,12 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         }
         return ResponseEntity.status(HttpStatus.OK).body(PostsSorted(
                 if (!posts.isEmpty()) (marker.toInt() + limit).toString() else marker, posts))
+    }
+
+    @RequestMapping(value = "api/thread/{slug_or_id}/details", method = arrayOf(RequestMethod.POST),
+            produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun updateThread(@PathVariable("slug_or_id") slugOrId: String, @RequestBody content: Thread): ResponseEntity<Any> {
+        val result = threadDb.update(content.message, content.title, slugOrId)
+        return ResponseEntity.status(result.status).body(result.body)
     }
 }
