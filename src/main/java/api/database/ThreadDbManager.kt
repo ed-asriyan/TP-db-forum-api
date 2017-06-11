@@ -28,7 +28,7 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
 
     fun create(author: String, created: String?, forum: String, message: String, slug: String?, title: String): Result {
         var sql = "INSERT INTO threads (author,"
-        sql += if (created != null ) " created," else ""
+        sql += if (created != null) " created," else ""
         sql += "  forum, message,"
         sql += if (slug != null) " slug," else ""
         sql += " title)"
@@ -73,5 +73,23 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
         } catch (e: DataAccessException) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
+    }
+
+    fun updateVote(nickname: String, voice: Int, slugOrId: String): Result {
+        try {
+            val threadId: Int
+            if (slugOrId.matches("\\d+".toRegex())) {
+                threadId = slugOrId.toInt()
+            } else {
+                threadId = jdbcTemplate.queryForObject("SELECT id FROM threads WHERE slug = '$slugOrId'", Int::class.java)
+            }
+            val sql = "SELECT update_or_insert_votes('$nickname', $threadId, $voice)"
+            jdbcTemplate.execute(sql)
+        } catch (e: DuplicateKeyException) {
+            return Result(get(slugOrId).body, HttpStatus.CONFLICT)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.CONFLICT)
+        }
+        return Result(get(slugOrId).body, HttpStatus.OK)
     }
 }

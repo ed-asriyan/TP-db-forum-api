@@ -78,8 +78,8 @@ class AppController(@param:Autowired val userDb: UserDbManager,
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun createPosts(@PathVariable("slug_or_id") slugOrId: String, @RequestBody posts: List<Post>): ResponseEntity<Any> {
         if (posts.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
-        val thread = threadDb.get(slugOrId).body
-        thread as? Thread ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        val thread = threadDb.get(slugOrId).body as? Thread
+        thread ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
         var id = postDb.getSeqId()
         val data = arrayListOf<PostExtended>()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -90,13 +90,13 @@ class AppController(@param:Autowired val userDb: UserDbManager,
             if (post.parent == 0) {
                 data.add(PostExtended(post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, null, id))
             } else {
-                val parentPost = postDb.get(id).body as? Post
+                val parentPost = postDb.get(post.parent).body as? Post
                 if (parentPost == null || thread.id != parentPost.thread) {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body(null)
                 }
                 val path = postDb.getPath(post.parent)
                 data.add(PostExtended(
-                        post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, path, (path as Array<Int>)[0]))
+                        post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, path, (path.getArray() as Array<Int>)[0]))
             }
             post.created = created
             post.forum = thread.forum
@@ -108,5 +108,18 @@ class AppController(@param:Autowired val userDb: UserDbManager,
             return ResponseEntity.status(code).body(posts)
         }
         return ResponseEntity.status(code).body(null)
+    }
+
+    @RequestMapping(value = "api/thread/{slug_or_id}/vote", method = arrayOf(RequestMethod.POST),
+            produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun voteForThread(@PathVariable("slug_or_id") slugOrId: String, @RequestBody content: Vote): ResponseEntity<Any> {
+        val result = threadDb.updateVote(content.nickname, content.voice, slugOrId)
+        return ResponseEntity.status(result.status).body(result.body)
+    }
+
+    @RequestMapping(value = "api/thread/{slug_or_id}/details", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun getThreadDetails(@PathVariable("slug_or_id") slugOrId: String): ResponseEntity<Any> {
+        val result = threadDb.get(slugOrId)
+        return ResponseEntity.status(result.status).body(result.body)
     }
 }

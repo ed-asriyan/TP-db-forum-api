@@ -5,7 +5,6 @@ import api.structures.Post
 import api.structures.PostExtended
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
-import org.springframework.dao.DataRetrievalFailureException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.jdbc.core.JdbcTemplate
