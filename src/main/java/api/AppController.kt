@@ -143,4 +143,16 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         val result = threadDb.update(content.message, content.title, slugOrId)
         return ResponseEntity.status(result.status).body(result.body)
     }
+
+    @RequestMapping(value = "api/forum/{slug}/users", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun getForumUsers(@RequestParam(value = "limit", required = false, defaultValue = "100") limit: Int,
+                      @RequestParam(value = "since", required = false) since: String?,
+                      @RequestParam(value = "desc", required = false, defaultValue = "false") desc: Boolean,
+                      @PathVariable("slug") slug: String): ResponseEntity<Any> {
+        var result = forumDb.get(slug)
+        if (result.body != null) {
+            result = userDb.getAllByForum(limit, since, desc, slug)
+        }
+        return ResponseEntity.status(result.status).body(result.body)
+    }
 }

@@ -63,4 +63,19 @@ class UserDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
     }
+
+    fun getAllByForum(limit: Int, since: String?, desc: Boolean, forum: String): Result {
+        var sql = "SELECT * FROM users WHERE nickname IN (SELECT nickname FROM forum_users WHERE forum = '$forum')"
+        if (since != null) {
+            sql += " AND nickname" + if (desc) " <" else " >"
+            sql += " '$since'"
+        }
+        sql += " ORDER BY nickname COLLATE ucs_basic" + if (desc) " DESC" else ""
+        sql += " LIMIT $limit"
+        try {
+            return Result(jdbcTemplate.query(sql, read), HttpStatus.OK)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.NOT_FOUND)
+        }
+    }
 }
