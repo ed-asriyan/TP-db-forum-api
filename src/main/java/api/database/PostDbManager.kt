@@ -20,6 +20,63 @@ import java.util.*
  */
 @Service
 class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
+    fun postsFlatSortSql(limit: Int, offset: Int, desc: Boolean, slugOrId: String): String {
+        var sql = "SELECT author, created, forum, id, isEdited, message, parent, thread FROM posts WHERE thread = "
+        if (slugOrId.matches("\\d+".toRegex())) {
+            val id = slugOrId.toInt()
+            sql += "$id"
+        } else {
+            sql += "(SELECT id FROM threads WHERE slug = '$slugOrId')"
+        }
+        sql += " ORDER BY created"
+        if (desc) {
+            sql += " DESC"
+        }
+        sql += ", id"
+        if (desc) {
+            sql += " DESC"
+        }
+        sql += " LIMIT $limit OFFSET $offset"
+        return sql
+    }
+
+    fun postsTreeSortSql(limit: Int, offset: Int, desc: Boolean, slugOrId: String): String {
+        var sql = "SELECT author, created, forum, id, isEdited, message, parent, thread FROM posts WHERE thread = "
+        if (slugOrId.matches("\\d+".toRegex())) {
+            val id = slugOrId.toInt()
+            sql += "$id"
+        } else {
+            sql += "(SELECT id FROM threads WHERE slug = '$slugOrId')"
+        }
+        sql += " ORDER BY path"
+        if (desc) {
+            sql += " DESC"
+        }
+        sql += " LIMIT $limit OFFSET $offset"
+        return sql
+    }
+
+    fun postsParentTreeSortSql(limit: Int, offset: Int, desc: Boolean, slugOrId: String): String {
+        var sql = "SELECT author, created, forum, id, isEdited, message, parent, thread FROM posts " +
+                "WHERE root_id IN (SELECT id FROM posts WHERE thread = "
+        if (slugOrId.matches("\\d+".toRegex())) {
+            val id = slugOrId.toInt()
+            sql += "$id"
+        } else {
+            sql += "(SELECT id FROM threads WHERE slug = '$slugOrId')"
+        }
+        sql += " AND parent = 0 ORDER BY id"
+        if (desc) {
+            sql += " DESC"
+        }
+        sql += " LIMIT $limit OFFSET $offset)"
+        sql += " ORDER BY path"
+        if (desc) {
+            sql += " DESC"
+        }
+        return sql
+    }
+
     private val read = { rs: ResultSet, _: Int ->
         val timestamp = rs.getTimestamp("created")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -82,6 +139,15 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)
         } catch (e: DataAccessException) {
             return Result(null, HttpStatus.NOT_FOUND)
+        }
+    }
+
+    fun sort(limit: Int, offset: Int, sort: String, desc: Boolean, slugOrId: String): List<Post> {
+        when (sort) {
+            "flat" -> return jdbcTemplate.query(postsFlatSortSql(limit, offset, desc, slugOrId), read)
+            "tree" -> return jdbcTemplate.query(postsTreeSortSql(limit, offset, desc, slugOrId), read)
+            "parent_tree" -> return jdbcTemplate.query(postsParentTreeSortSql(limit, offset, desc, slugOrId), read)
+            else -> throw NoSuchFieldError()
         }
     }
 }

@@ -122,4 +122,18 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         val result = threadDb.get(slugOrId)
         return ResponseEntity.status(result.status).body(result.body)
     }
+
+    @RequestMapping(value = "api/thread/{slug_or_id}/posts", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun viewThreads(@RequestParam(value = "limit", required = false, defaultValue = "100") limit: Int,
+                    @RequestParam(value = "marker", required = false, defaultValue = "0") marker: String,
+                    @RequestParam(value = "sort", required = false, defaultValue = "flat") sort: String,
+                    @RequestParam(value = "desc", required = false, defaultValue = "false") desc: Boolean,
+                    @PathVariable("slug_or_id") slugOrId: String): ResponseEntity<PostsSorted> {
+        val posts = postDb.sort(limit, marker.toInt(), sort, desc, slugOrId)
+        if (posts.isEmpty() && marker == "0") {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(PostsSorted(
+                if (!posts.isEmpty()) (marker.toInt() + limit).toString() else marker, posts))
+    }
 }
