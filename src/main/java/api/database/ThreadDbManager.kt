@@ -1,7 +1,7 @@
 package api.database
 
 import api.Result
-import api.models.Thread
+import api.structures.Thread
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException
@@ -49,9 +49,9 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     fun get(slugOrId: String): Result {
         val sql: String
         if (slugOrId.matches("\\d+".toRegex())) {
-            sql = "SELECT * FROM threads WHERE slug = '$slugOrId'"
+            sql = "SELECT * FROM threads WHERE id = $slugOrId"
         } else {
-            sql = "SELECT * FROM threads WHERE id = '$slugOrId'"
+            sql = "SELECT * FROM threads WHERE slug = '$slugOrId'"
         }
         try {
             return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)

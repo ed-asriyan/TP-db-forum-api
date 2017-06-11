@@ -1,15 +1,17 @@
 package api
 
 import api.database.ForumDbManager
+import api.database.PostDbManager
 import api.database.ThreadDbManager
 import api.database.UserDbManager
-import api.models.Forum
-import api.models.Thread
-import api.models.User
+import api.structures.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Created by ed on 10.06.17.
@@ -17,7 +19,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 class AppController(@param:Autowired val userDb: UserDbManager,
                     @param:Autowired val forumDb: ForumDbManager,
-                    @param:Autowired val threadDb: ThreadDbManager) {
+                    @param:Autowired val threadDb: ThreadDbManager,
+                    @param:Autowired val postDb: PostDbManager) {
     @RequestMapping(value = "api/user/{nickname}/create", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun createUser(@PathVariable("nickname") nickname: String, @RequestBody content: User): ResponseEntity<Any> {
@@ -68,5 +71,42 @@ class AppController(@param:Autowired val userDb: UserDbManager,
             result = threadDb.getAllByForum(limit, since, desc, slug)
         }
         return ResponseEntity.status(result.status).body(result.body)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @RequestMapping(value = "api/thread/{slug_or_id}/create", method = arrayOf(RequestMethod.POST),
+            produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun createPosts(@PathVariable("slug_or_id") slugOrId: String, @RequestBody posts: List<Post>): ResponseEntity<Any> {
+        if (posts.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        val thread = threadDb.get(slugOrId).body
+        thread as? Thread ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        var id = postDb.getSeqId()
+        val data = arrayListOf<PostExtended>()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+        val created = dateFormat.format(java.sql.Timestamp(System.currentTimeMillis()))
+        for (post in posts) {
+            ++id
+            if (post.parent == 0) {
+                data.add(PostExtended(post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, null, id))
+            } else {
+                val parentPost = postDb.get(id).body as? Post
+                if (parentPost == null || thread.id != parentPost.thread) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(null)
+                }
+                val path = postDb.getPath(post.parent)
+                data.add(PostExtended(
+                        post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, path, (path as Array<Int>)[0]))
+            }
+            post.created = created
+            post.forum = thread.forum
+            post.id = id
+            post.thread = thread.id
+        }
+        val code = postDb.create(data)
+        if (code == HttpStatus.CREATED) {
+            return ResponseEntity.status(code).body(posts)
+        }
+        return ResponseEntity.status(code).body(null)
     }
 }

@@ -1,7 +1,7 @@
 package api.database
 
 import api.Result
-import api.models.Forum
+import api.structures.Forum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException

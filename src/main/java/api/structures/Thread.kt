@@ -1,4 +1,4 @@
-package api.models
+package api.structures
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
