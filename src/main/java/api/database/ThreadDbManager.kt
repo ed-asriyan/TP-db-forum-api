@@ -59,4 +59,19 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
     }
+
+    fun getAllByForum(limit: Int, since: String?, desc: Boolean, forum: String): Result {
+        var sql = "SELECT * FROM threads WHERE forum = '$forum'"
+        if (since != null) {
+            sql += " AND created" + if (desc) " <=" else " >="
+            sql += " '$since'"
+        }
+        sql += " ORDER BY created" + if (desc) " DESC" else ""
+        sql += " LIMIT $limit"
+        try {
+            return Result(jdbcTemplate.query(sql, read), HttpStatus.OK)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.NOT_FOUND)
+        }
+    }
 }

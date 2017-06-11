@@ -53,8 +53,20 @@ class AppController(@param:Autowired val userDb: UserDbManager,
 
     @RequestMapping(value = "api/forum/{slug}/create", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
-    fun createThread(@PathVariable("slug") forum: String, @RequestBody content: Thread): ResponseEntity<Any> {
-        val result = threadDb.create(content.author, content.created, forum, content.message, content.slug, content.title)
+    fun createThread(@PathVariable("slug") slug: String, @RequestBody content: Thread): ResponseEntity<Any> {
+        val result = threadDb.create(content.author, content.created, slug, content.message, content.slug, content.title)
+        return ResponseEntity.status(result.status).body(result.body)
+    }
+
+    @RequestMapping(value = "api/forum/{slug}/threads", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun getForumThreads(@RequestParam(value = "limit", required = false, defaultValue = "100") limit: Int,
+                        @RequestParam(value = "since", required = false) since: String?,
+                        @RequestParam(value = "desc", required = false, defaultValue = "false") desc: Boolean,
+                        @PathVariable("slug") slug: String): ResponseEntity<Any> {
+        var result = forumDb.get(slug)
+        if (result.body != null) {
+            result = threadDb.getAllByForum(limit, since, desc, slug)
+        }
         return ResponseEntity.status(result.status).body(result.body)
     }
 }
