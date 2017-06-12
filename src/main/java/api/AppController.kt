@@ -58,7 +58,7 @@ class AppController(@param:Autowired val userDb: UserDbManager,
     @RequestMapping(value = "api/forum/{slug}/create", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun createThread(@PathVariable("slug") slug: String, @RequestBody content: Thread): ResponseEntity<Any> {
-        val result = threadDb.create(content.author!!, content.created, slug, content.message, content.slug, content.title)
+        val result = threadDb.create(content.author!!, content.created, slug, content.message!!, content.slug, content.title!!)
         return ResponseEntity.status(result.status).body(result.body)
     }
 
@@ -116,6 +116,10 @@ class AppController(@param:Autowired val userDb: UserDbManager,
     @RequestMapping(value = "api/thread/{slug_or_id}/vote", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun voteForThread(@PathVariable("slug_or_id") slugOrId: String, @RequestBody content: Vote): ResponseEntity<Any> {
+        val user = userDb.getOne(content.nickname).body as? User
+        user ?: return ResponseEntity.notFound().build()
+        val thread = threadDb.get(slugOrId).body as? Thread
+        thread ?: return ResponseEntity.notFound().build()
         val result = threadDb.updateVote(content.nickname, content.voice, slugOrId)
         return ResponseEntity.status(result.status).body(result.body)
     }
@@ -188,10 +192,9 @@ class AppController(@param:Autowired val userDb: UserDbManager,
     @RequestMapping(value = "api/post/{id}/details", method = arrayOf(RequestMethod.POST),
             produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     fun updatePost(@RequestBody content: Field, @PathVariable("id") id: Int): ResponseEntity<Any> {
-        val result: Result
-        if (content.message == null) {
-            result = postDb.get(id)
-        } else {
+        var result = postDb.get(id)
+        result.body ?: return ResponseEntity.notFound().build()
+        if (content.message != null && (result.body as Post).message != content.message) {
             result = postDb.update(id, content.message)
         }
         return ResponseEntity.status(result.status).body(result.body)

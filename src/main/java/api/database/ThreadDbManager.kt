@@ -93,8 +93,11 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
         return Result(get(slugOrId).body, HttpStatus.OK)
     }
 
-    fun update(message: String, title: String, slugOrId: String): Result {
-        var sql = "UPDATE threads SET message = '$message', title = '$title' WHERE"
+    fun update(message: String?, title: String?, slugOrId: String): Result {
+        var sql = "UPDATE threads SET"
+        sql += if (message != null) " message = '$message'," else " message = message,"
+        sql += if (title != null) " title = '$title'" else " title = title"
+        sql += " WHERE"
         if (slugOrId.matches("\\d+".toRegex())) {
             val id = slugOrId.toInt()
             sql += " id = $id"
