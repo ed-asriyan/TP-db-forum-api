@@ -5,8 +5,16 @@ CREATE EXTENSION IF NOT EXISTS CITEXT;
 --
 
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS forums CASCADE;
+DROP TABLE IF EXISTS threads CASCADE;
+DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS forum_users CASCADE;
+DROP TABLE IF EXISTS votes CASCADE;
+
+--
 
 CREATE TABLE IF NOT EXISTS users (
+  id       SERIAL PRIMARY KEY,
   about    TEXT DEFAULT NULL,
   email    CITEXT UNIQUE,
   fullname TEXT DEFAULT NULL,
@@ -14,8 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 --
-
-DROP TABLE IF EXISTS forums CASCADE;
 
 CREATE TABLE IF NOT EXISTS forums (
   "user"  CITEXT REFERENCES users (nickname) ON DELETE CASCADE  NOT NULL,
@@ -26,8 +32,6 @@ CREATE TABLE IF NOT EXISTS forums (
 );
 
 --
-
-DROP TABLE IF EXISTS threads CASCADE;
 
 CREATE TABLE IF NOT EXISTS threads (
   author  CITEXT REFERENCES users (nickname) ON DELETE CASCADE  NOT NULL,
@@ -41,8 +45,6 @@ CREATE TABLE IF NOT EXISTS threads (
 );
 
 --
-
-DROP TABLE IF EXISTS posts CASCADE;
 
 CREATE TABLE IF NOT EXISTS posts (
   author   CITEXT REFERENCES users (nickname) ON DELETE CASCADE      NOT NULL,
@@ -59,16 +61,12 @@ CREATE TABLE IF NOT EXISTS posts (
 
 --
 
-DROP TABLE IF EXISTS forum_users CASCADE;
-
 CREATE TABLE IF NOT EXISTS forum_users (
-  nickname CITEXT REFERENCES users (nickname) ON DELETE CASCADE,
-  forum    CITEXT REFERENCES forums (slug) ON DELETE CASCADE
+  user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+  forum   CITEXT REFERENCES forums (slug) ON DELETE CASCADE
 );
 
 --
-
-DROP TABLE IF EXISTS votes CASCADE;
 
 CREATE TABLE IF NOT EXISTS votes (
   nickname CITEXT REFERENCES users (nickname) ON DELETE CASCADE,
@@ -76,39 +74,3 @@ CREATE TABLE IF NOT EXISTS votes (
   voice    INTEGER DEFAULT 0,
   CONSTRAINT unique_pair UNIQUE (nickname, thread)
 );
-
-
-CREATE OR REPLACE FUNCTION on_insert_post_or_thread()
-  RETURNS TRIGGER AS '
-BEGIN
-  INSERT INTO forum_users (nickname, forum) VALUES (NEW.author, NEW.forum);
-  RETURN NEW;
-END;
-' LANGUAGE plpgsql;
-
-CREATE TRIGGER post_insert_trigger
-AFTER INSERT ON posts
-FOR EACH ROW EXECUTE PROCEDURE on_insert_post_or_thread();
-
-CREATE TRIGGER thread_insert_trigger
-AFTER INSERT ON threads
-FOR EACH ROW EXECUTE PROCEDURE on_insert_post_or_thread();
-
---
-
-DROP FUNCTION IF EXISTS update_or_insert_votes( CITEXT, INTEGER, INTEGER );
-
-CREATE OR REPLACE FUNCTION update_or_insert_votes(vote_user_nickname CITEXT, vote_thread INTEGER,
-                                                  vote_value         INTEGER)
-  RETURNS VOID AS '
-BEGIN
-  INSERT INTO votes (nickname, thread, voice) VALUES (vote_user_nickname, vote_thread, vote_value)
-  ON CONFLICT (nickname, thread)
-    DO UPDATE SET voice = vote_value;
-  UPDATE threads
-  SET votes = (SELECT SUM(voice)
-               FROM votes
-               WHERE thread = vote_thread)
-  WHERE id = vote_thread;
-END;
-' LANGUAGE plpgsql;

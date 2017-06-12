@@ -83,7 +83,7 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             } else {
                 threadId = jdbcTemplate.queryForObject("SELECT id FROM threads WHERE slug = '$slugOrId'", Int::class.java)
             }
-            val sql = "SELECT update_or_insert_votes('$nickname', $threadId, $voice)"
+            val sql = "SELECT manage_votes('$nickname', $threadId, $voice)"
             jdbcTemplate.execute(sql)
         } catch (e: DuplicateKeyException) {
             return Result(get(slugOrId).body, HttpStatus.CONFLICT)
