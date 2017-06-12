@@ -81,13 +81,12 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         if (posts.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
         val thread = threadDb.get(slugOrId).body as? Thread
         thread ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
-        var id = postDb.getSeqId()
         val data = arrayListOf<PostExtended>()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         dateFormat.timeZone = TimeZone.getTimeZone("UTC")
         val created = dateFormat.format(java.sql.Timestamp(System.currentTimeMillis()))
         for (post in posts) {
-            ++id
+            val id = postDb.getSeqId()
             val author = userDb.getOne(post.author)
             author.body ?: return ResponseEntity.status(author.status).body(author.body)
             if (post.parent == 0) {

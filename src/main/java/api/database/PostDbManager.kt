@@ -89,8 +89,8 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     }
 
     fun create(posts: ArrayList<PostExtended>): HttpStatus {
-        val sql = "INSERT INTO posts (author, created, forum, message, parent, thread, path, root_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, array_append(?, ?), ?)"
+        val sql = "INSERT INTO posts (author, created, forum, id, message, parent, thread, path, root_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, array_append(?, ?), ?)"
         try {
             jdbcTemplate.dataSource.connection.use { connection ->
                 connection.autoCommit = false
@@ -100,12 +100,13 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
                             preparedStatement.setString(1, post.author)
                             preparedStatement.setString(2, post.created)
                             preparedStatement.setString(3, post.forum)
-                            preparedStatement.setString(4, post.message)
-                            preparedStatement.setInt(5, post.parent)
-                            preparedStatement.setInt(6, post.thread)
-                            preparedStatement.setArray(7, post.path)
-                            preparedStatement.setInt(8, post.id)
-                            preparedStatement.setInt(9, post.root_id)
+                            preparedStatement.setInt(4, post.id)
+                            preparedStatement.setString(5, post.message)
+                            preparedStatement.setInt(6, post.parent)
+                            preparedStatement.setInt(7, post.thread)
+                            preparedStatement.setArray(8, post.path)
+                            preparedStatement.setInt(9, post.id)
+                            preparedStatement.setInt(10, post.root_id)
                             preparedStatement.addBatch()
                         }
                         preparedStatement.executeBatch()

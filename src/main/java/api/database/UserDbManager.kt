@@ -65,7 +65,7 @@ class UserDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getAllByForum(limit: Int, since: String?, desc: Boolean, forum: String): Result {
-        var sql = "SELECT * FROM users WHERE nickname IN (SELECT nickname FROM forum_users WHERE forum = '$forum')"
+        var sql = "SELECT * FROM users WHERE id IN (SELECT user_id FROM forum_users WHERE forum = '$forum')"
         if (since != null) {
             sql += " AND nickname" + if (desc) " <" else " >"
             sql += " '$since'"
