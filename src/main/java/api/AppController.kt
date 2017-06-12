@@ -6,6 +6,7 @@ import api.database.ThreadDbManager
 import api.database.UserDbManager
 import api.structures.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -87,6 +88,8 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         val created = dateFormat.format(java.sql.Timestamp(System.currentTimeMillis()))
         for (post in posts) {
             ++id
+            val author = userDb.getOne(post.author)
+            author.body ?: return ResponseEntity.status(author.status).body(author.body)
             if (post.parent == 0) {
                 data.add(PostExtended(post.author, created, thread.forum!!, id, post.message, post.parent, thread.id!!, null, id))
             } else {
@@ -152,6 +155,44 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         var result = forumDb.get(slug)
         if (result.body != null) {
             result = userDb.getAllByForum(limit, since, desc, slug)
+        }
+        return ResponseEntity.status(result.status).body(result.body)
+    }
+
+    @RequestMapping(value = "api/post/{id}/details", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun getPostDetails(@RequestParam(value = "related", required = false) related: String?,
+                       @PathVariable("id") id: Int): ResponseEntity<Any> {
+        val post = postDb.get(id).body as? Post
+        post ?: return ResponseEntity.notFound().build()
+        var user: User? = null
+        var forum: Forum? = null
+        var thread: Thread? = null
+        if (related != null) {
+            for (relation in related.split(",").toTypedArray()) {
+                when (relation) {
+                    "user" -> {
+                        user = userDb.getOne(post.author).body as User
+                    }
+                    "forum" -> {
+                        forum = forumDb.get(post.forum!!).body as Forum
+                    }
+                    "thread" -> {
+                        thread = threadDb.get(post.thread.toString()).body as Thread
+                    }
+                }
+            }
+        }
+        return ResponseEntity.ok().body(PostDetailed(user, forum, post, thread))
+    }
+
+    @RequestMapping(value = "api/post/{id}/details", method = arrayOf(RequestMethod.POST),
+            produces = arrayOf(MediaType.APPLICATION_JSON_VALUE), consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    fun updatePost(@RequestBody content: Field, @PathVariable("id") id: Int): ResponseEntity<Any> {
+        val result: Result
+        if (content.message == null) {
+            result = postDb.get(id)
+        } else {
+            result = postDb.update(id, content.message)
         }
         return ResponseEntity.status(result.status).body(result.body)
     }

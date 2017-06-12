@@ -1,8 +1,10 @@
 package api.database
 
 import api.Result
+import api.structures.Forum
 import api.structures.Post
 import api.structures.PostExtended
+import api.structures.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException
@@ -153,6 +155,15 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             "tree" -> return jdbcTemplate.query(postsTreeSortSql(limit, offset, desc, slugOrId), read)
             "parent_tree" -> return jdbcTemplate.query(postsParentTreeSortSql(limit, offset, desc, slugOrId), read)
             else -> throw NoSuchFieldError()
+        }
+    }
+
+    fun update(id: Int, message: String): Result {
+        val sql = "UPDATE posts SET message = '$message', isEdited = TRUE WHERE id = $id RETURNING *"
+        try {
+            return Result(jdbcTemplate.queryForObject(sql, read), HttpStatus.OK)
+        } catch (e: DataAccessException) {
+            return Result(null, HttpStatus.NOT_FOUND)
         }
     }
 }
