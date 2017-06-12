@@ -78,4 +78,12 @@ class UserDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
     }
+
+    fun count(): Int {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Int::class.java)
+    }
+
+    fun clear() {
+        jdbcTemplate.execute("DELETE FROM users")
+    }
 }

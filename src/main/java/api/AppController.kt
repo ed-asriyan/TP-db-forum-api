@@ -199,4 +199,18 @@ class AppController(@param:Autowired val userDb: UserDbManager,
         }
         return ResponseEntity.status(result.status).body(result.body)
     }
+
+    @RequestMapping("api/service/status")
+    fun getStatus(): ResponseEntity<Any> {
+        return ResponseEntity.ok().body(Status(forumDb.count(), postDb.count(), threadDb.count(), userDb.count()))
+    }
+
+    @RequestMapping("api/service/clear")
+    fun clearDb(): ResponseEntity<Any> {
+        userDb.clear()
+        threadDb.clear()
+        forumDb.clear()
+        postDb.clear()
+        return ResponseEntity.ok().build()
+    }
 }

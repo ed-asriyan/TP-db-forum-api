@@ -113,4 +113,12 @@ class ThreadDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
     }
+
+    fun count(): Int {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM threads", Int::class.java)
+    }
+
+    fun clear() {
+        jdbcTemplate.execute("DELETE FROM threads")
+    }
 }

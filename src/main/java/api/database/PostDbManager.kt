@@ -166,4 +166,12 @@ class PostDbManager(@param:Autowired val jdbcTemplate: JdbcTemplate) {
             return Result(null, HttpStatus.NOT_FOUND)
         }
     }
+
+    fun count(): Int {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM posts", Int::class.java)
+    }
+
+    fun clear() {
+        jdbcTemplate.execute("DELETE FROM posts")
+    }
 }
