@@ -1,10 +1,8 @@
 package api.database
 
 import api.Result
-import api.structures.Forum
 import api.structures.Post
 import api.structures.PostExtended
-import api.structures.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException

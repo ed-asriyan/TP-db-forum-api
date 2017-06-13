@@ -6,7 +6,6 @@ import api.database.ThreadDbManager
 import api.database.UserDbManager
 import api.structures.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
