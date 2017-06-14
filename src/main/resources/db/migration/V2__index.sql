@@ -19,15 +19,15 @@ CREATE INDEX ON forums ("user");
 
 CREATE INDEX ON threads (author);
 CREATE INDEX ON threads (forum);
-CREATE INDEX ON posts (thread, created, id);
-CREATE INDEX ON posts (thread, path);
-CREATE INDEX ON posts (root_id, path);
-CREATE INDEX ON posts (thread, parent, id);
 
 --
 
 CREATE INDEX ON posts (author);
 CREATE INDEX ON posts (forum);
+CREATE INDEX ON posts (thread, created, id);
+CREATE INDEX ON posts (thread, path);
+CREATE INDEX ON posts (root_id, path);
+CREATE INDEX ON posts (thread, parent, id);
 
 --
 
